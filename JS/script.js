@@ -19,6 +19,30 @@ function switchScreen(screenId, title) {
     document.getElementById('windowTitle').innerText = "WIMS - " + title;
     const win = document.getElementById('appWindow');
     win.style.width = (screenId === 'managerScreen') ? "650px" : "400px";
+    if (['opReceiveScreen', 'opShipScreen', 'opCheckScreen'].includes(screenId)) {
+        updateDropdowns();
+    }
+}
+
+function updateDropdowns() {
+    let options = '<option value="">Оберіть зі списку</option>';
+    inventory.forEach(item => {
+        options += `<option value="${item.art}">${item.name} (${item.art})</option>`;
+    });
+
+    const ids = ['recvSelect', 'shipSelect', 'checkSelect'];
+    ids.forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.innerHTML = options;
+    });
+}
+
+function fillArtFromSelect(selectId, targetInputId) {
+    const select = document.getElementById(selectId);
+    const input = document.getElementById(targetInputId);
+    if (select.value) {
+        input.value = select.value;
+    }
 }
 
 function showToast(message) {
@@ -63,6 +87,7 @@ function processReceive() {
         showToast(`✅ Прийнято ${qty} од. товару ${art}. Новий залишок: ${item.qty}`);
         document.getElementById('recvArt').value = "";
         document.getElementById('recvQty').value = "";
+        document.getElementById('recvSelect').value = "";
         switchScreen('operatorScreen', 'Панель Оператора');
     } else if (!item) {
         showToast("❌ Товар з таким артикулом не знайдено!");
@@ -75,13 +100,13 @@ function processShip() {
     const art = document.getElementById('shipArt').value;
     const qty = parseInt(document.getElementById('shipQty').value);
     const item = inventory.find(i => i.art === art);
-
     if (item && qty > 0) {
         if (item.qty >= qty) {
             item.qty -= qty;
             showToast(`📦 Відвантажено ${qty} од. товару ${art}. Залишок: ${item.qty}`);
             document.getElementById('shipArt').value = "";
             document.getElementById('shipQty').value = "";
+            document.getElementById('shipSelect').value = "";
             switchScreen('operatorScreen', 'Панель Оператора');
         } else {
             showToast(`⚠️ Недостатньо товару! Доступно: ${item.qty}`);
@@ -106,10 +131,9 @@ function processTransfer() {
     const loc = document.getElementById('transLoc').value;
     const qty = parseInt(document.getElementById('transQty').value);
     const item = inventory.find(i => i.art === art);
-
     if (item && loc && qty > 0) {
         if (qty <= item.qty) {
-             item.loc = loc;
+             item.loc = loc; 
              showToast(`🔄 Товар ${art} (${qty} шт.) переміщено в ${loc}`);
              switchScreen('operatorScreen', 'Панель Оператора');
         } else {
